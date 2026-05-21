@@ -103,85 +103,91 @@ const papers = [
     journal: "Circulation",
     year: "2025",
     source: "https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.124.072335",
-    takeaway: "The same allocation-policy logic applied across pediatric and adult subgroups reveals heterogeneous effects that broad adult-only averages mask: infants with CHD and adults with cardiomyopathy improved; adults with CHD and children with cardiomyopathy did not.",
+    takeaway: "11,637-patient UNOS cohort shows that allocation policy benefits are heterogeneous: infants and children with CHD and adults with cardiomyopathy improved under the new rules; children with cardiomyopathy and adults with CHD did not.",
     sections: {
-      Motivation: "Prior evaluation of heart allocation changes focused on adult patients overall, leaving subgroups with congenital heart disease (CHD) and cardiomyopathy — especially across pediatric and adult allocation systems — poorly characterized.",
-      Design: "Retrospective UNOS cohort of patients listed for heart transplantation with CHD or cardiomyopathy. Pediatric (<18) and adult (18–50) patients analyzed separately with their respective policy dates (2016 and 2018).",
-      Methods: "Diagnoses adjudicated from dual-coded UNOS records using clinical hierarchy rules. Fine-Gray competing-risk survival models fit within each age/diagnosis stratum. Smaller strata use frequent-category imputation and stepwise covariate selection.",
-      Results: "Allocation changes associated with lower death/removal for infants with CHD (HR 0.75), children with CHD (HR 0.61), and adults with cardiomyopathy (HR 0.60). Benefits were not significant for children with cardiomyopathy or adults with CHD."
+      Motivation: "Prior analyses of heart allocation changes focused on the adult population as a whole, masking meaningful heterogeneity across age groups and diagnoses. Pediatric patients and adults with congenital heart disease face distinct anatomical constraints and device-support limitations. The 2016 pediatric and 2018 adult allocation revisions provide separate natural experiments to test whether universal allocation rules produce uniform benefit across these subpopulations.",
+      Design: "Retrospective UNOS cohort of 11,637 patients: 2,882 pediatric CHD, 594 adult CHD, 2,348 pediatric cardiomyopathy, 5,813 adult cardiomyopathy. Pediatric (<18 yr) policy dates — pre-era: 1/1/2011–3/21/2016; post-era: 1/1/2017–12/31/2021. Adult (18–50 yr) policy dates — pre-era: 1/1/2015–10/17/2018; post-era: 1/1/2019–12/31/2021. Washout gaps between eras deliberately excluded transition-phase listings to prevent contamination.",
+      Methods: "Primary outcome: pre-transplant death, defined as waitlist death OR removal for clinical deterioration with death within 60 days of removal. Competing outcomes: heart transplant or clinical improvement removal. Pre-policy patients still on the waitlist at the exact policy change date were censored. Unadjusted survival estimated by Kaplan-Meier curves. Multivariable competing risk regression used variables that were significant in univariate analysis plus clinically established covariates. Proportional hazards assumption tested per age group; time-interaction terms added when violated.",
+      Results: "Adjusted competing risk models showed significant reductions in 1-year waitlist mortality/deterioration for infants with CHD (HR 0.75, p = 0.04), children with CHD (HR 0.61, p = 0.005), and adults with cardiomyopathy. No significant benefit was found for children with cardiomyopathy or adults with CHD, demonstrating that universal allocation rules have heterogeneous effects across anatomical and age-based subgroups."
     },
     methods: [
       {
-        name: "Stratified Cohort Design",
-        definition: "A design strategy that pre-specifies analytical strata based on clinically meaningful characteristics, then fits separate models within each stratum. This prevents effect heterogeneity from being 'averaged out' in pooled estimates (Simpson's paradox) and is essential when the mechanism or baseline risk differs meaningfully across groups.",
+        name: "Fine-Gray Competing Risks",
+        definition: "Multivariable competing risk regression using the Fine-Gray subdistribution hazard model \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] where \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = 1) \\) is the cumulative incidence of the focal event. Applied separately within each age/diagnosis stratum. The primary outcome definition here is stricter than simple waitlist death: it is a composite of death on the waitlist OR removal for clinical deterioration with death occurring within 60 days of that removal.",
         setup: [
-          "Pre-specify strata: age system (pediatric vs. adult) × diagnosis (CHD vs. cardiomyopathy) → 4 primary strata",
-          "Further subdivide pediatric by age: infants (< 1 yr), children (1–17 yr)",
-          "Use different policy cutoff dates: 2016 change for pediatric system, 2018 change for adult system",
-          "Fit separate Fine-Gray models within each stratum; do not pool across strata",
-          "Adolescents explored across three eras because both allocation systems may affect them"
+          "Focal (primary) outcome: waitlist death OR removal for deterioration with subsequent death \\( \\leq 60 \\) days",
+          "Competing outcomes: heart transplant; clinical improvement removal",
+          "Censoring protocol: pre-policy patients still listed at the exact policy change date are censored at that date to avoid crossover bias",
+          "Variable selection: baseline variables significant in univariate regression, plus variables with established clinical relevance",
+          "Infant models (< 1 yr): adjusted for race, cerebrovascular disease, dialysis, inotropes, mechanical ventilation, ECMO, and VAD at registration",
+          "Pediatric models (1–17 yr): adjusted for age, BMI, cerebrovascular disease, dialysis, inotropes, mechanical ventilation, ECMO, VAD, and functional status; 70 patients with missing values excluded via listwise deletion",
+          "Adult CHD models: constrained covariate set (inotropes, VAD at registration, eGFR group) due to small event counts to prevent overfitting"
         ],
         hypothesisTesting: {
-          null: "Within each stratum: SHR = 1 (policy change has no effect on waitlist death/removal)",
-          test: "Stratum-specific Wald tests on policy-era SHR; heterogeneity of effect inferred by comparing stratum-specific CIs (no formal cross-stratum test)",
-          alpha: "\\( \\alpha = 0.05 \\) per stratum"
+          null: "SHR = 1 within each age/diagnosis stratum: allocation policy era does not change the subdistribution hazard of waitlist death or deterioration",
+          test: "Wald test on the policy-era SHR coefficient in each stratum-specific Fine-Gray model",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Six primary subgroup models reveal that the headline finding from adult-only pooled analyses does not hold uniformly: adult CHD patients showed no significant benefit (HR ≈ 1.0), a clinically critical distinction that a single pooled model would obscure."
+        usageInPaper: "Six primary stratum models. Significant benefit: infants with CHD (HR 0.75, \\( p = 0.04 \\)), children with CHD (HR 0.61, \\( p = 0.005 \\)), adults with cardiomyopathy. No significant benefit: children with cardiomyopathy, adults with CHD. The adult CHD null result is a critical finding that pooled adult analyses would have obscured."
+      },
+      {
+        name: "Kaplan-Meier (Unadjusted)",
+        definition: "The Kaplan-Meier estimator provides a non-parametric estimate of the survival function: \\[ \\hat{S}(t) = \\prod_{t_i \\leq t} \\left(1 - \\frac{d_i}{n_i}\\right) \\] where \\( d_i \\) is the number of events and \\( n_i \\) the number at risk at each observed event time \\( t_i \\). It is the standard first step for visualizing survival differences between groups before multivariable adjustment. Importantly, standard KM curves do not account for competing events — they treat transplant and clinical improvement as uninformative censoring, which overestimates the true probability of waitlist death.",
+        setup: [
+          "Plot separate KM curves for pre-policy and post-policy cohorts within each age/diagnosis stratum",
+          "Time-zero: date of waitlist listing; event: waitlist death or removal for deterioration",
+          "Subjects censored at transplant, clinical improvement removal, end of follow-up, or policy change date (pre-policy crossovers)",
+          "KM is unadjusted — it does not control for baseline differences between eras"
+        ],
+        hypothesisTesting: {
+          null: "\\( S_{\\text{pre}}(t) = S_{\\text{post}}(t) \\): unadjusted waitlist survival is identical between policy eras",
+          test: "Log-rank test comparing pre- and post-policy KM curves within each stratum",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
+        },
+        usageInPaper: "KM curves provide visual and unadjusted evidence of policy-era differences in each subgroup before the competing risk models are introduced. Because KM ignores competing events (transplant precludes waitlist death), the Fine-Gray multivariable models are the primary inferential tool — KM serves as exploratory groundwork."
+      },
+      {
+        name: "Non-Proportional Hazards Correction",
+        definition: "The proportional hazards (PH) assumption requires that the ratio of hazards between groups is constant over the entire follow-up period. When this assumption is violated — meaning the effect of a covariate grows or shrinks over time — the standard Fine-Gray coefficient is biased. The standard fix is to introduce a time-interaction term: \\( \\beta_1 X + \\beta_2 (X \\times t) \\), which allows the hazard ratio for \\( X \\) to vary linearly with time \\( t \\). The coefficient \\( \\beta_2 \\) captures how the effect of \\( X \\) changes per unit of follow-up time.",
+        setup: [
+          "Test PH assumption for each covariate in each stratum-specific model using scaled Schoenfeld residuals (significant correlation with time = PH violation)",
+          "When a violation is detected, add a product term: covariate \\( \\times \\) follow-up time",
+          "Infant model violation: PH assumption failed for cerebrovascular disease → add time \\( \\times \\) cerebrovascular disease interaction",
+          "Pediatric (1–17 yr) model violation: PH assumption failed for mechanical ventilation → add time \\( \\times \\) mechanical ventilation interaction",
+          "Re-test residuals after adding interaction term to confirm correction"
+        ],
+        hypothesisTesting: {
+          null: "\\( \\beta_2 = 0 \\): the hazard ratio for the covariate is constant over follow-up time (PH holds)",
+          test: "Scaled Schoenfeld residual test (correlation of residuals with time); significant \\( p \\) indicates PH violation and triggers addition of the interaction term",
+          alpha: "\\( \\alpha = 0.05 \\)"
+        },
+        usageInPaper: "PH violations were found and corrected in two age-group models. In infants, cerebrovascular disease had a time-varying effect — its hazard ratio changed over the follow-up window, likely reflecting high early mortality in infants with neurological complications. In pediatric patients (1–17 yr), mechanical ventilation at registration had a time-varying effect, consistent with mechanical ventilation being a stronger short-term mortality predictor than a long-term one."
       },
       {
         name: "Diagnosis Adjudication",
-        definition: "A rule-based classifier applied to registry data to resolve ambiguous or dual diagnosis codes into a single clinically coherent category. Administrative registries often assign multiple diagnostic codes, creating misclassification bias if not resolved. The adjudication algorithm encodes clinical domain knowledge (e.g., a patient coded for both CHD and dilated cardiomyopathy is likely a CHD patient with secondary cardiac dysfunction).",
+        definition: "A rule-based classifier applied to UNOS registry records to resolve the subset of patients assigned both a CHD and a cardiomyopathy code. Because these codes are not mutually exclusive in UNOS, dual-coded patients must be assigned to one diagnostic group before stratum-specific models can be fit. Failure to resolve dual codes would contaminate both CHD and cardiomyopathy strata with misclassified patients, biasing within-stratum effect estimates.",
         setup: [
-          "Identify patients with both CHD and cardiomyopathy codes in UNOS registry",
-          "Apply a clinical hierarchy: CHD code takes precedence unless cardiomyopathy is the primary listing diagnosis",
-          "Document the decision rule explicitly so it is reproducible",
-          "Sensitivity analysis: exclude all dual-coded patients entirely and re-run primary models"
+          "Identify all adult patients with both a CHD code and a cardiomyopathy code in UNOS (\\( n = 85 \\))",
+          "Apply clinical hierarchy: patients coded as 'CHD with surgery' (\\( n = 38 \\)) are assigned to the CHD cohort, reflecting that a prior surgical history confirms structural congenital disease",
+          "Remaining dual-coded patients assigned by primary listing diagnosis",
+          "Document the decision rule to make it auditable and reproducible"
         ],
         hypothesisTesting: null,
-        usageInPaper: "Patients with overlapping CHD and cardiomyopathy codes in UNOS are assigned using clinical hierarchy. The sensitivity analysis excluding dual-coded patients produces consistent SHRs, validating the adjudication algorithm."
-      },
-      {
-        name: "Fine-Gray Competing Risks",
-        definition: "Same subdistribution hazard framework as Paper 1 — \\( h^*(t) = -\\frac{d}{dt}\\log[1 - F_1(t)] \\) — applied within each age/diagnosis stratum separately. The focal event and event definition differ slightly: death on waitlist or within 60 days of removal for deterioration is the composite focal event; transplant remains the primary competing event.",
-        setup: [
-          "Focal event: waitlist death OR removal for clinical deterioration within 60 days",
-          "Competing event: transplant; surviving withdrawals censored at 60 days post-removal",
-          "Pre-policy patients still listed at the policy change date censored at that date",
-          "Check PH assumption for \\( h^*(t) \\); add time-varying covariate for policy era if violated",
-          "Infant models exclude functional status and eGFR (not measured at this age)"
-        ],
-        hypothesisTesting: {
-          null: "SHR = 1 within stratum: policy era does not change subdistribution hazard of waitlist death/deterioration",
-          test: "Wald test on policy-era SHR in each stratum-specific Fine-Gray model",
-          alpha: "\\( \\alpha = 0.05 \\), two-sided"
-        },
-        usageInPaper: "Separate Fine-Gray models for infants (CHD only), children (CHD; cardiomyopathy), and adults (CHD; cardiomyopathy). Policy-era SHRs range from 0.60 (adult cardiomyopathy, significant benefit) to ≈1.0 (adult CHD, no benefit). Adolescents require a three-era model since both allocation systems changed sequentially."
-      },
-      {
-        name: "Frequent-Category Imputation",
-        definition: "A simplified missing-data strategy for small analytic samples where standard multiple imputation is unstable. Missing categorical values are replaced with the mode (most frequent observed category) of that variable. Stepwise covariate selection then trims the model to maintain an adequate events-per-variable (EPV) ratio, preventing overfitting in small strata.",
-        setup: [
-          "Apply mode imputation to strata too small for stable MI (adult CHD; pediatric cardiomyopathy)",
-          "Target EPV \\( \\geq 10 \\): if the ratio falls below threshold, remove lowest-priority covariates until it is met",
-          "Priority order for removal: least biologically plausible, highest missingness",
-          "Report the final covariate set per stratum to make selection transparent"
-        ],
-        hypothesisTesting: null,
-        usageInPaper: "Adult CHD and pediatric cardiomyopathy strata are too small for full covariate adjustment. Frequent-category imputation preserves sample size; stepwise reduction keeps model degrees of freedom within bounds. This is explicitly less rigorous than the MI used in Paper 1 — a transparency note about the analytic trade-off in small-sample strata."
+        usageInPaper: "Of 85 adults with dual CHD and cardiomyopathy codes, 38 coded as 'CHD with surgery' were placed into the CHD cohort. This rule-based decision directly affects the composition of the adult CHD stratum (n = 594 total), which is already a small group. Misclassification in either direction would inflate or deflate the adult CHD null result — the adjudication algorithm makes the analytic choice transparent."
       }
     ],
     signals: [
-      ["Infant CHD death/removal SHR", 0.75],
-      ["Child CHD death/removal SHR", 0.61],
-      ["Adult cardiomyopathy SHR", 0.60],
-      ["Adult CHD SHR (no benefit)", 1.00]
+      ["Infant CHD death/removal HR", 0.75],
+      ["Child CHD death/removal HR", 0.61],
+      ["Adult cardiomyopathy HR", 0.60],
+      ["Adult CHD HR (no benefit)", 1.00]
     ],
     pitfalls: [
-      ["Registry misclassification", "UNOS diagnosis codes blend congenital lesions with secondary valve or myopathic disease; adjudication helps but cannot recover missing clinical granularity."],
-      ["Policy interference", "Adolescent candidates may fall under both pediatric and adult allocation systems simultaneously, making a clean before-after assignment impossible."],
-      ["Unobserved severity", "Hemodynamic data, device timing, and center practice patterns are not captured in registry fields and confound era comparisons within strata."]
+      ["Small adult CHD subgroup", "With only 594 adult CHD patients and few events, the null result may reflect insufficient power rather than a true absence of benefit — constrained models mitigate overfitting but cannot recover statistical power."],
+      ["Policy interference in adolescents", "Adolescent candidates may fall under both pediatric and adult allocation systems simultaneously, making a clean before-after assignment impossible across the two washout windows."],
+      ["Listwise deletion bias", "70 pediatric patients (1–17 yr) excluded due to missing covariate values — if missingness is related to illness severity, this exclusion could bias the pediatric cardiomyopathy estimate."]
     ],
-    tags: ["UNOS", "subgroups", "Fine-Gray", "CHD", "cardiomyopathy", "competing risks", "stratification"]
+    tags: ["UNOS", "Fine-Gray", "Kaplan-Meier", "CHD", "cardiomyopathy", "time-interaction", "non-proportional hazards", "washout period"]
   },
 
   {
