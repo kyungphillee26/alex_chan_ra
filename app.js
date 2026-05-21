@@ -7,71 +7,78 @@ const papers = [
     journal: "JAMA Cardiology",
     year: "2021",
     source: "https://doi.org/10.1001/jamacardio.2020.4909",
-    takeaway: "A national UNOS registry cohort treats the 2018 adult heart allocation revision as a policy-era exposure, showing improved waitlist outcomes but worse risk-adjusted posttransplant survival.",
+    takeaway: "15,631 adult UNOS heart transplant recipients compared across the October 2018 allocation change. Waitlist outcomes improved under the new 6-tier system, but posttransplant survival decreased.",
     sections: {
-      Motivation: "The 2018 adult heart allocation system expanded urgency tiers and shifted priority toward temporary mechanical circulatory support. The study asks whether the new rules changed patient selection, waitlist outcomes, donor selection, and posttransplant survival.",
-      Design: "Retrospective national cohort of adult heart transplants in the UNOS registry. Patients split into pre-policy and post-policy eras; multiorgan transplants excluded; follow-up through March 31, 2020.",
-      Methods: "Waitlist outcomes analyzed as competing events (Fine-Gray). Posttransplant survival estimated by Kaplan-Meier and multivariable Cox. Missing data handled with multiple imputation; variables >10% missing excluded.",
-      Results: "Post-policy listing: lower waitlist mortality/deterioration (SHR 0.60), higher transplant likelihood (SHR 1.38), lower recovery removals (SHR 0.54). One-year posttransplant survival was lower in the new era (HR 1.29) even after risk adjustment."
+      Motivation: "The October 2018 policy converted the prior 3-tier adult heart allocation system into a 6-tier hierarchy stratified by clinical condition and urgency, with goals of reducing waitlist mortality and enabling broader geographic sharing of donor organs. The study examines whether these goals were achieved and at what cost to posttransplant survival.",
+      Design: "Retrospective UNOS cohort of 15,631 adult heart transplant recipients. Pre-policy: 10/1/2015–10/17/2018 (10,671 waitlisted; 6,078 transplanted). Post-policy: from 10/18/2018 (4,960 waitlisted; 2,801 transplanted). Multiorgan transplants excluded. Exposure: heart transplant after the policy change.",
+      Methods: "Categorical variables: percentages compared with chi-square tests. Continuous variables: mean ± SD compared with 2-tailed unpaired t-test or Wilcoxon rank-sum test (depending on normality). Waitlist outcomes: Fine and Gray competing-risk regression reporting subhazard ratios with 95% CIs. Posttransplant survival: Kaplan-Meier curves with log-rank test, followed by multivariable Cox regression. Variables with >10% missingness (prior pregnancy, peak PRA, etc.) dropped entirely.",
+      Results: "Post-policy waitlisted patients: reduced likelihood of mortality or deterioration, increased likelihood of transplant, and reduced likelihood of recovery removal. Among transplant recipients: 6,078 pre-policy vs. 2,801 post-policy. Conclusion — waitlist outcomes improved, but posttransplant survival decreased."
     },
     methods: [
       {
-        name: "Policy-Era Design",
-        definition: "A before-after observational design that uses a known, exogenous policy change date to define exposure groups — approximating a natural experiment. Patients are assigned to pre-policy or post-policy cohorts based on the date of their index event (listing or transplant), not on any individual-level decision.",
-        setup: [
-          "Define the policy cutoff: October 18, 2018 (UNOS adult heart allocation revision)",
-          "Assign exposure by date of listing (waitlist analysis) or transplant (posttransplant analysis)",
-          "Exclude multiorgan transplants to keep the exposure interpretable",
-          "For the posttransplant cohort, drop patients listed pre-policy but transplanted post-policy ('crossover' patients) — analyzed separately as a sensitivity check"
-        ],
-        hypothesisTesting: null,
-        usageInPaper: "All UNOS adult heart transplant candidates divided into pre-policy (before Oct 18, 2018) and post-policy cohorts. Waitlisted patients still on the list at the policy change date are censored to prevent exposure contamination. A sensitivity analysis re-includes the crossover group and finds the same survival result, ruling out a transition-period artifact."
-      },
-      {
         name: "Fine-Gray Competing Risks",
-        definition: "A subdistribution hazard regression for time-to-event data with competing events. Where standard Cox treats competing events as uninformative censoring (overestimating cumulative incidence), Fine-Gray directly models \\( h^*(t) \\), the hazard in an extended risk set that retains subjects who have experienced a competing event: \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] where \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = 1) \\) is the cause-specific cumulative incidence function. The model estimates subdistribution hazard ratios (SHR) rather than ordinary HRs.",
+        definition: "A subdistribution hazard regression for time-to-event data with competing events. Where standard Cox treats competing events as uninformative censoring (overestimating cumulative incidence), Fine-Gray directly models \\( h^*(t) \\), the hazard in an extended risk set that retains subjects who have already experienced a competing event: \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] where \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = 1) \\) is the cause-specific cumulative incidence function. The model estimates subdistribution hazard ratios (SHR) with 95% CIs rather than ordinary HRs.",
         setup: [
-          "Classify all terminal events: focal event (waitlist death or deterioration) and competing events (transplant; recovery removal)",
-          "Specify the extended risk set at time \\( t \\): subjects with \\( T_i \\geq t \\) plus subjects who have already experienced a competing event, entered with downweighted contributions",
-          "Fit a proportional subdistribution hazard model with policy era as primary exposure",
-          "Report SHRs with 95% CIs; plot cumulative incidence functions (CIF) — not \\( 1 - \\hat{S}_{\\text{KM}} \\)"
+          "Classify all terminal waitlist events: focal event (death or deterioration requiring delisting) and competing events (transplant; recovery removal)",
+          "Extended risk set at time \\( t \\): subjects with \\( T_i \\geq t \\) plus subjects who experienced a competing event, entered with downweighted contributions",
+          "Fit a proportional subdistribution hazard model; policy era is the primary exposure",
+          "Report SHRs with 95% CIs; plot cumulative incidence functions (CIF), not \\( 1 - \\hat{S}_{\\text{KM}} \\)"
         ],
         hypothesisTesting: {
-          null: "SHR = 1: policy era does not change the subdistribution hazard of the focal event",
+          null: "SHR = 1: policy era does not change the subdistribution hazard of the focal waitlist event",
           test: "Wald test on the policy-era coefficient; Gray's test for unadjusted CIF comparisons between eras",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Three mutually exclusive waitlist outcomes modeled with separate Fine-Gray models: (1) death or deterioration (focal), (2) transplant (competing), (3) recovery removal (competing). Post-policy SHR = 0.60 for death/deterioration, SHR = 1.38 for transplant, SHR = 0.54 for recovery. These cannot be summed as simple probabilities — each represents a separate subdistribution hazard."
+        usageInPaper: "Three separate Fine-Gray models for waitlist outcomes: (1) death or deterioration (focal), (2) transplant (competing), (3) recovery removal (competing). Post-policy: SHR = 0.60 for death/deterioration (reduced mortality risk), SHR = 1.38 for transplant (higher transplant likelihood), SHR = 0.54 for recovery (fewer recovery removals). These are reported as subhazard ratios, not ordinary probabilities."
+      },
+      {
+        name: "Kaplan-Meier + Log-Rank",
+        definition: "The Kaplan-Meier (KM) estimator is a non-parametric method for estimating the survival function \\( S(t) = P(T > t) \\) from censored data: \\[ \\hat{S}(t) = \\prod_{t_i \\leq t} \\left(1 - \\frac{d_i}{n_i}\\right) \\] where \\( d_i \\) is the number of events and \\( n_i \\) the number at risk at each observed event time \\( t_i \\). The log-rank test compares two or more KM curves by testing whether the observed-to-expected event counts differ across groups, with test statistic \\[ \\chi^2 = \\frac{\\left(\\sum_i (O_{1i} - E_{1i})\\right)^2}{\\sum_i V_i} \\] where \\( V_i \\) is the hypergeometric variance at each event time.",
+        setup: [
+          "Time-zero: transplant date; event: all-cause posttransplant death",
+          "Stratify KM curves by policy era (pre vs. post October 2018)",
+          "Compute the log-rank test statistic comparing the two survival curves",
+          "KM + log-rank is the unadjusted step before multivariable Cox regression"
+        ],
+        hypothesisTesting: {
+          null: "\\( S_{\\text{pre}}(t) = S_{\\text{post}}(t) \\) for all \\( t \\): posttransplant survival curves are identical across policy eras",
+          test: "Log-rank \\( \\chi^2 \\) test (1 degree of freedom for two groups); equivalently, the Mantel-Cox test",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
+        },
+        usageInPaper: "KM curves are plotted for pre-policy and post-policy transplant recipients to visually compare posttransplant survival. The log-rank test provides an unadjusted p-value. Because KM does not adjust for case-mix differences between eras (post-policy patients are sicker on average), the multivariable Cox model is the primary inferential tool."
       },
       {
         name: "Cox Proportional Hazards",
-        definition: "A semi-parametric regression for time-to-event outcomes. The model specifies: \\[ h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\] where \\( h_0(t) \\) is the unspecified baseline hazard and \\( e^{\\beta_j} \\) is the hazard ratio for a unit increase in \\( X_j \\). Semi-parametric means \\( h_0(t) \\) is left free while covariate effects enter via \\( e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\). The proportional hazards (PH) assumption requires \\( h_i(t)/h_j(t) = e^{(\\mathbf{X}_i - \\mathbf{X}_j)^\\top \\boldsymbol{\\beta}} \\) to be constant over \\( t \\).",
+        definition: "A semi-parametric regression for time-to-event outcomes. The model specifies: \\[ h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\] where \\( h_0(t) \\) is the unspecified baseline hazard and \\( e^{\\beta_j} \\) is the hazard ratio (HR) per unit increase in \\( X_j \\). The proportional hazards assumption requires \\( h_i(t)/h_j(t) = e^{(\\mathbf{X}_i - \\mathbf{X}_j)^\\top \\boldsymbol{\\beta}} \\) to be constant over \\( t \\). Allows case-mix adjustment that the unadjusted KM curves cannot provide.",
         setup: [
           "Time-zero: transplant date; event: all-cause death post-transplant",
-          "Candidate covariates selected by biological plausibility plus univariate \\( p < 0.05 \\)",
-          "Variables with \\( > 10\\% \\) missingness excluded; remainder handled by multiple imputation",
-          "PH assumption verified via scaled Schoenfeld residuals; time-varying covariates added if violated",
-          "Kaplan-Meier curves plotted; log-rank test used for unadjusted group comparison"
+          "Covariates selected by biological plausibility plus univariate \\( p < 0.05 \\)",
+          "Variables with \\( > 10\\% \\) missingness dropped entirely; remaining missing values handled by multiple imputation",
+          "PH assumption verified via scaled Schoenfeld residuals"
         ],
         hypothesisTesting: {
-          null: "HR = 1 for policy era: post-policy transplantation does not change the hazard of posttransplant death",
-          test: "Wald test on policy-era HR; log-rank test on KM curves; scaled Schoenfeld residual test for PH assumption",
+          null: "HR = 1 for policy era: post-policy transplantation does not change the hazard of death after adjusting for case mix",
+          test: "Wald test on the policy-era HR coefficient",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Post-policy era HR = 1.29 (95% CI: 1.07–1.55) — a 29% higher hazard of death after transplant despite waitlist improvements. This paradox motivates the interpretation that sicker patients are being bridged and transplanted under the new rules, not that transplant care worsened."
+        usageInPaper: "Post-policy era HR = 1.29 — a 29% higher hazard of posttransplant death even after adjusting for recipient and donor characteristics. This adjusted estimate confirms that the survival difference seen on KM curves is not explained by the sicker case mix of post-policy recipients, suggesting a real tradeoff between waitlist benefit and posttransplant risk."
       },
       {
-        name: "Multiple Imputation",
-        definition: "A principled missing-data technique that replaces each missing value with \\( M \\) plausible draws from the posterior predictive distribution \\( p(\\mathbf{Y}_{\\text{mis}} \\mid \\mathbf{Y}_{\\text{obs}}) \\). Each of the \\( M \\) completed datasets is analyzed separately, and results are pooled via Rubin's rules: \\[ \\bar{\\theta} = \\frac{1}{M}\\sum_{m=1}^M \\hat{\\theta}_m, \\qquad \\widehat{\\operatorname{Var}}_{\\text{total}} = \\bar{V}_W + \\Bigl(1 + \\tfrac{1}{M}\\Bigr)B \\] where \\( \\bar{V}_W \\) is the mean within-imputation variance and \\( B = (M-1)^{-1}\\sum_m(\\hat{\\theta}_m - \\bar{\\theta})^2 \\) is the between-imputation variance. Valid under the missing-at-random (MAR) assumption.",
+        name: "Descriptive Statistics",
+        definition: "Baseline characteristic comparisons between pre- and post-policy cohorts use two standard inferential frameworks depending on variable type. For categorical variables, counts and percentages are compared with the chi-square test \\( \\chi^2 = \\sum_i (O_i - E_i)^2 / E_i \\). For continuous variables, means and standard deviations are reported and compared with a 2-tailed unpaired t-test (if normally distributed) or the Wilcoxon rank-sum test (if non-normal), with normality assessed prior to test selection.",
         setup: [
-          "Exclude variables with \\( > 10\\% \\) missingness entirely (too sparse for stable imputation)",
-          "Specify an imputation model for remaining covariates (predictive mean matching for continuous; logistic for binary)",
-          "Generate \\( M \\geq 5 \\) imputed datasets",
-          "Fit the Cox model on each; pool via Rubin's rules",
-          "Compare pooled results to complete-case analysis as a sensitivity check"
+          "Categorical variables: report \\( n \\) (%) per group; test with \\( \\chi^2 \\) (or Fisher's exact when expected cell counts \\( < 5 \\))",
+          "Continuous variables: report mean \\( \\pm \\) SD; test normality before choosing t-test vs. Wilcoxon",
+          "2-tailed unpaired t-test when normality holds: \\( t = (\\bar{x}_1 - \\bar{x}_2) / s_p\\sqrt{1/n_1 + 1/n_2} \\)",
+          "Wilcoxon rank-sum test (Mann-Whitney U) when normality fails: ranks pooled observations and tests whether distributions are shifted",
+          "These tests inform Table 1 — they do not adjust for confounders"
         ],
-        hypothesisTesting: null,
-        usageInPaper: "Applied to the posttransplant Cox model. Missing covariate values (recipient BMI, creatinine, ischemic time) were imputed rather than listwise-deleted, retaining all eligible transplant recipients and avoiding the selection bias that complete-case analysis would introduce."
+        hypothesisTesting: {
+          null: "No difference in covariate distribution between pre- and post-policy cohorts",
+          test: "Chi-square for categorical; 2-tailed unpaired t-test or Wilcoxon rank-sum for continuous (chosen by normality test)",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
+        },
+        usageInPaper: "Table 1 of the paper compares recipient age, sex, diagnosis, BMI, mechanical support type, donor characteristics, and ischemic time between the pre-policy (n = 6,078) and post-policy (n = 2,801) transplant cohorts. Significant differences in case mix between eras (e.g., shift toward temporary MCS, sicker recipients) motivate the use of multivariable Cox adjustment rather than relying on the unadjusted KM comparison."
       }
     ],
     signals: [
@@ -82,10 +89,10 @@ const papers = [
     ],
     pitfalls: [
       ["Era confounding", "Secular improvements in donor quality, surgical technique, and center behavior may coincide with the policy change and confound era comparisons."],
-      ["Transition contamination", "Patients listed before but transplanted after a policy change blur the exposure boundary — addressed here by excluding and then re-including this group as a sensitivity analysis."],
-      ["Mechanism ambiguity", "Increased use of temporary mechanical support is both a consequence of the policy and a marker of higher illness severity, making it a mediator, not just a covariate."]
+      ["Transition contamination", "Patients listed before but transplanted after the policy change blur the exposure boundary — addressed by excluding and then re-including this group as a sensitivity analysis."],
+      ["Mechanism ambiguity", "Increased use of temporary mechanical support is both a consequence of the policy and a marker of higher illness severity, making it a mediator rather than a simple covariate."]
     ],
-    tags: ["UNOS", "policy era", "Fine-Gray", "Cox", "multiple imputation", "competing risks"]
+    tags: ["UNOS", "3-tier to 6-tier", "Fine-Gray", "Kaplan-Meier", "Cox", "chi-square", "t-test / Wilcoxon"]
   },
 
   {
