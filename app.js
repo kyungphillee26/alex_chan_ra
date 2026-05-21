@@ -198,88 +198,89 @@ const papers = [
     journal: "JAMA",
     year: "2014",
     source: "https://jamanetwork.com/journals/jama/fullarticle/1849992",
-    takeaway: "Linking VA electronic health records to OPTN waitlist data, this study models geographic distance as a continuous log-scaled exposure and finds that each doubling of distance from a VA transplant center is independently associated with lower odds of waitlisting and higher mortality.",
+    takeaway: "Tripartite VHA–OPTN–Medicare linkage of >50,000 Veterans demonstrates a dose-dependent geographic disparity: Veterans living >100 miles from a VA Transplant Center have significantly lower SHRs for waitlisting and transplant, and higher mortality hazard.",
     sections: {
-      Motivation: "Centralized specialty care may improve quality but imposes travel burdens that reduce access. The VA's national structure — with centralized liver transplant programs — provides an ideal setting to isolate the distance effect from insurance and income heterogeneity.",
-      Design: "Retrospective study of VA patients meeting minimal liver-transplant eligibility criteria (ICD-9–validated decompensated cirrhosis or HCC) from 2003 to 2010, linked to OPTN waitlist data.",
-      Methods: "Distance modeled continuously on log₂ scale. Waitlisting: GEE logistic regression clustered by VA hospital. Transplantation: competing-risk Cox. Survival: Cox from first decompensation. Schoenfeld residuals check PH assumption.",
-      Results: "Greater distance associated with lower odds of VA-center waitlisting (OR 0.91 per doubling), lower any-center waitlisting (OR 0.94), lower transplant SHR (0.97), and higher mortality HR (1.03) among waitlisted veterans."
+      Motivation: "The VHA operates a hub-and-spoke model with a small number of dedicated VA Transplant Centers (VATCs) nationwide. Centralization may improve surgical quality and outcomes, but it imposes travel burdens that could reduce referral and access for Veterans living far from a VATC. The study asks whether geographic distance creates measurable, dose-dependent disparities in waitlisting, transplantation, and survival.",
+      Design: "Retrospective national cohort of >50,000 US Veterans receiving VHA care from 2003 to 2010 diagnosed with end-stage liver disease (cirrhosis, hepatic decompensation, or HCC). Tripartite data linkage: VHA Corporate Data Warehouse (CDW) and administrative data + OPTN/SRTR databases + Medicare claims (to capture VA-external transplants). Exclusions: prior liver transplant; missing zip code data needed for distance calculation. Primary exposure: distance from patient's home zip-code centroid to nearest VATC, categorized as ≤100, 101–200, 201–300, and >300 miles.",
+      Methods: "Waitlisting: Fine-Gray competing risk regression (competing risk = pre-waitlist all-cause death). Transplantation: Fine-Gray models (competing risk = waitlist removal for deterioration or waitlist death). Overall survival: multivariable Cox regression. All models incorporate a shared frailty term to account for clustering of patients within 21 Veterans Integrated Service Networks (VISNs). Covariates include age, sex, race/ethnicity, liver disease etiology, Charlson Comorbidity Index, MELD approximations, and Census-linked neighborhood SES. Missing MELD components (bilirubin, INR, creatinine) handled with multiple imputation.",
+      Results: "Significant, dose-dependent geographic disparity across all three outcomes. Compared to Veterans ≤100 miles from a VATC, those >100 miles away had significantly lower SHRs for waitlisting and receipt of transplant, and higher HR for all-cause mortality. Medicare linkage was critical: it captured Veterans transplanted at private hospitals outside the VA system, preventing their incorrect classification as censored observations in the competing risk models."
     },
     methods: [
       {
-        name: "GEE Logistic Regression",
-        definition: "Generalized Estimating Equations is a marginal (population-averaged) regression framework for correlated outcomes. GEE solves the system: \\[ \\sum_{i=1}^N \\mathbf{D}_i^\\top \\mathbf{V}_i^{-1}\\bigl(\\mathbf{Y}_i - \\boldsymbol{\\mu}_i\\bigr) = \\mathbf{0} \\] where \\( \\mathbf{D}_i = \\partial \\boldsymbol{\\mu}_i / \\partial \\boldsymbol{\\beta} \\) and \\( \\mathbf{V}_i = \\phi\\, A_i^{1/2} R(\\alpha) A_i^{1/2} \\) is the working covariance using working correlation matrix \\( R(\\alpha) \\). The sandwich (robust) variance estimator \\( \\hat{V}_{\\text{robust}} \\) is valid even if \\( R(\\alpha) \\) is mis-specified.",
+        name: "Fine-Gray Competing Risks",
+        definition: "Applied twice in this paper for two distinct outcome pathways, each with a different competing event. Fine-Gray directly models the subdistribution hazard \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] so that cumulative incidence \\( F_1(t) \\) is estimated correctly rather than being inflated by treating competing events as uninformative censoring. The two applications differ in their focal and competing events.",
         setup: [
-          "Outcome: binary waitlisting (yes/no); link: logit",
-          "Exposure: \\( \\log_2(d) \\) where \\( d \\) is distance in miles from patient's VA hospital to nearest VA transplant center",
-          "Clustering unit: VA hospital (patients within the same hospital share referral pathways)",
-          "Working correlation structure: exchangeable — all pairs within a cluster equally correlated",
-          "Report odds ratios (OR) and 95% CIs from the robust sandwich variance estimator"
+          "Waitlisting model — focal event: placement on OPTN liver transplant waitlist; competing event: all-cause death before waitlisting; time-zero: cohort entry (date of diagnosis or decompensation)",
+          "Transplantation model — focal event: receipt of a liver transplant; competing event: waitlist removal for clinical deterioration or death on the waitlist; time-zero: date of waitlisting",
+          "Distance exposure categorized as ≤ 100, 101–200, 201–300, and > 300 miles from home zip-code centroid to nearest VATC (reference: ≤ 100 miles)",
+          "Secondary exposure: distance to nearest non-VA transplant center, tested as an effect modifier",
+          "Covariates: age, sex, race/ethnicity, liver disease etiology (HCV, alcohol-related), Charlson Comorbidity Index, MELD score approximations, Census-linked neighborhood median income",
+          "Shared frailty term included in each model to account for VISN-level clustering (see Shared Frailty method)"
         ],
         hypothesisTesting: {
-          null: "OR = 1: log₂-distance is not associated with the odds of waitlisting",
-          test: "Wald chi-square test on the \\( \\log_2(d) \\) coefficient using the robust SE",
+          null: "SHR = 1 for each distance tier vs. reference (≤ 100 miles): distance category is not associated with the subdistribution hazard of waitlisting or transplantation",
+          test: "Wald test on each distance-tier coefficient; Gray's test for unadjusted CIF comparisons across tiers",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Primary model for waitlisting. OR = 0.91 per doubling of distance to a VA transplant center (p < 0.001). A secondary model tests whether proximity to non-VA transplant centers attenuates the association — it does not, suggesting VA-specific referral pathways drive the access gradient."
+        usageInPaper: "Veterans > 100 miles from a VATC had significantly lower SHRs for both waitlisting and transplantation compared to those ≤ 100 miles. The dose-response pattern — with SHRs declining progressively across the 101–200, 201–300, and > 300 mile tiers — is the paper's primary evidence of a geographic access gradient. Medicare linkage ensures that transplants performed at non-VA centers are counted as events, not misclassified as censored observations."
       },
       {
-        name: "Log₂ Distance Exposure",
-        definition: "A continuous geographic exposure measured on a base-2 logarithmic scale. The transformation \\( \\text{exposure} = \\log_2(d) \\) linearizes the right-skewed distance distribution. Because one unit increase in \\( \\log_2(d) \\) corresponds to a doubling of \\( d \\), the regression coefficient \\( \\hat{\\beta} \\) is directly interpretable as the log-OR (or log-HR) per doubling of raw distance — a clinically natural unit.",
+        name: "Cox with Shared Frailty",
+        definition: "For overall survival, a standard multivariable Cox model \\( h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\) is extended with a shared frailty term to account for the hierarchical data structure. Veterans are nested within 21 Veterans Integrated Service Networks (VISNs) — regional administrative units. Patients within the same VISN share unmeasured characteristics (regional transplant culture, referral practices, local physician behavior) that induce within-cluster correlation. Ignoring this correlation produces standard errors that are too small (overstated precision). A shared frailty model adds a random effect \\( u_k \\) for each VISN \\( k \\): \\[ h_{ik}(t \\mid \\mathbf{X}_i, u_k) = u_k \\cdot h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}_i} \\] where \\( u_k \\overset{\\text{iid}}{\\sim} \\text{Gamma}(1, \\theta) \\) captures between-VISN heterogeneity.",
         setup: [
-          "Measure distance \\( d \\) from each patient's routine VA hospital to the nearest VA liver transplant center",
-          "Transform: \\( \\text{exposure} = \\log_2(d) \\); one unit increase \\( \\Leftrightarrow \\) \\( d \\) doubles",
-          "Fit all primary models with \\( \\log_2(d) \\) as a continuous covariate; report \\( e^{\\hat{\\beta}} \\) as OR or HR per doubling",
-          "Post-hoc: bin into categorical distance bands for figures only — not used for primary inference"
+          "Time-zero: cohort entry (date of diagnosis); event: all-cause mortality",
+          "Frailty term: shared Gamma frailty at the VISN level (21 VISNs), estimated jointly with \\( \\boldsymbol{\\beta} \\)",
+          "Covariates: age, sex, race/ethnicity, etiology, Charlson Comorbidity Index, MELD approximation, distance tier, neighborhood SES",
+          "The variance parameter \\( \\theta \\) of the frailty distribution is reported; \\( \\theta \\approx 0 \\) indicates negligible VISN-level clustering",
+          "PH assumption verified via scaled Schoenfeld residuals"
         ],
         hypothesisTesting: {
-          null: "Coefficient on \\( \\log_2(d) \\) equals zero: raw distance has no log-linear association with the outcome",
-          test: "Test of linearity in \\( \\log_2(d) \\) via regression spline or likelihood ratio test for departure from the log-linear model",
-          alpha: "\\( \\alpha = 0.05 \\)"
-        },
-        usageInPaper: "Primary exposure in all three outcome models (waitlisting, transplant, survival). The continuous OR/HR per doubling is reported as the primary estimate; categorical bands accompany figures but should not be used for causal inference because bands were chosen after inspecting the data."
-      },
-      {
-        name: "Competing Risks Cox (Transplant)",
-        definition: "A survival analysis that treats death as a competing event for the outcome of liver transplantation. Without this adjustment, the Kaplan-Meier estimator of transplant probability overestimates cumulative incidence by treating the competing event as uninformative censoring. The subdistribution hazard model again gives \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = \\text{transplant}) \\) directly, free from the bias introduced by simply computing \\( 1 - \\hat{S}_{\\text{KM}} \\).",
-        setup: [
-          "Time-zero: date of waitlisting; focal event: receipt of liver transplant; competing event: death before transplant",
-          "Covariates: MELD score, albumin, HCC, insurance, area poverty level, \\( \\log_2(d) \\)",
-          "Check PH assumption for \\( h^*(t) \\) via Schoenfeld residuals; add time × distance interaction if violated",
-          "Report SHR per unit increase in \\( \\log_2(d) \\) (i.e., per doubling of distance)"
-        ],
-        hypothesisTesting: {
-          null: "SHR = 1: distance is not associated with transplant probability after accounting for death as a competing event",
-          test: "Wald test on \\( \\log_2(d) \\) coefficient; Gray's test for unadjusted CIF comparison across distance quartiles",
+          null: "HR = 1 for each distance tier vs. ≤ 100 miles: distance is not associated with all-cause mortality after adjusting for case mix and VISN frailty",
+          test: "Wald test on distance-tier coefficients; likelihood ratio test for frailty variance \\( H_0: \\theta = 0 \\) (tests whether clustering correction is needed)",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Among waitlisted veterans, SHR = 0.97 per doubling of distance (p < 0.01). The competing-risk model is important because sicker patients (higher MELD) may both be closer to VA centers and die faster, creating a confound that standard Kaplan-Meier would not correct."
+        usageInPaper: "Veterans >100 miles from a VATC had significantly higher all-cause mortality HRs vs. the ≤100-mile reference group. The shared frailty term corrects SEs for the fact that patients within the same VISN share referral environments — without this correction, the geographic effect would appear more precisely estimated than warranted, inflating the risk of false positives."
       },
       {
-        name: "ICD-9 Eligibility Algorithm",
-        definition: "A validated rule-based algorithm that uses administrative diagnosis codes from electronic health records to identify patients meeting clinical study inclusion criteria. Translates clinical eligibility rules (decompensated liver disease or HCC without contraindications) into reproducible code-based logic. The algorithm's sensitivity and specificity against chart review determine how much misclassification bias affects downstream estimates.",
+        name: "Multiple Imputation",
+        definition: "A principled missing-data technique used here specifically for the laboratory values needed to compute MELD scores (bilirubin, INR, creatinine). MELD — the Model for End-Stage Liver Disease — is a composite severity score used to prioritize liver transplant candidates: \\[ \\text{MELD} = 3.78 \\ln(\\text{bilirubin}) + 11.2 \\ln(\\text{INR}) + 9.57 \\ln(\\text{creatinine}) + 6.43 \\] Each missing component is replaced with \\( M \\) draws from its posterior predictive distribution given the observed data; the \\( M \\) completed datasets are analyzed separately and results pooled via Rubin's rules.",
         setup: [
-          "Inclusion codes: validated ICD-9-CM algorithms for decompensated cirrhosis (ascites, hepatic encephalopathy, variceal hemorrhage, spontaneous bacterial peritonitis) OR hepatocellular carcinoma",
-          "Active VA care requirement: ≥ 2 outpatient visits in the 12 months after the eligibility-defining event",
-          "Exclusion codes: prior organ transplant, age < 18 or > 70, contraindicated malignancies",
-          "Algorithm validated against medical chart review in a subset; sensitivity and PPV reported"
+          "Identify patients with any missing MELD component (bilirubin, INR, or creatinine) in VHA administrative records",
+          "Specify imputation model conditioning on age, sex, race/ethnicity, liver disease etiology, comorbidities, and observed lab values",
+          "Generate \\( M \\geq 5 \\) imputed datasets; compute MELD approximation in each",
+          "Pool competing risk and Cox model estimates across imputed datasets using Rubin's rules: \\( \\bar{\\theta} = M^{-1}\\sum_m \\hat{\\theta}_m \\)",
+          "Compare pooled estimates to complete-case analysis as a sensitivity check"
         ],
         hypothesisTesting: null,
-        usageInPaper: "Identifies 3,866 eligible VA patients from 2003 to 2010. Provides a nationally representative cohort of VA patients who should have been considered for transplant referral, enabling a study of whether referral (waitlisting) actually occurred as a function of distance. Without this algorithm, the denominator for access measurement would be undefined."
+        usageInPaper: "MELD is the primary severity adjustment variable in all three outcome models. Without imputation, patients missing any lab value would be dropped (complete-case analysis), and because missingness is correlated with illness severity and rurality, this would systematically bias the estimated distance-outcome associations. Imputation retains the full cohort and removes this selection bias."
+      },
+      {
+        name: "Tripartite Data Linkage",
+        definition: "A data assembly strategy that joins three independent administrative sources — VHA records, OPTN/SRTR, and Medicare claims — to construct a complete longitudinal picture of each Veteran's transplant pathway. Each source alone would produce biased estimates: VHA data alone cannot capture transplants performed at private hospitals; OPTN data alone cannot define the at-risk denominator of eligible Veterans; Medicare alone misses VA-internal care. The linkage is the study's most important design feature for eliminating a specific competing-event misclassification: Veterans who live far from a VATC but get transplanted at a non-VA hospital using Medicare would otherwise appear as censored non-events.",
+        setup: [
+          "Source 1: VHA CDW — patient demographics, diagnoses (ICD-9), lab values, care dates, zip codes",
+          "Source 2: OPTN/SRTR — waitlist placements, transplant dates, organ characteristics",
+          "Source 3: Medicare claims — transplants and deaths occurring outside the VA system",
+          "Geographic exposure: straight-line (Euclidean) distance between centroid of patient's home zip code and zip code of nearest VATC",
+          "Secondary exposure: distance to nearest non-VA liver transplant center (effect modifier test)",
+          "Neighborhood SES: Census data linked by patient zip code — median household income as confounder"
+        ],
+        hypothesisTesting: null,
+        usageInPaper: "Medicare linkage is what allows the competing-risk models to be correctly specified: a Veteran living 400 miles from a VATC who receives a transplant at a private academic center is recorded as a transplant event rather than as censored. Without Medicare, the distant-Veteran group would have artificially lower transplant rates not because of access barriers but because of data truncation — a classic informative-censoring problem."
       }
     ],
     signals: [
-      ["VA-center waitlisting OR per doubling", 0.91],
-      ["Any-center waitlisting OR per doubling", 0.94],
-      ["Transplant SHR per doubling", 0.97],
-      ["Mortality HR per doubling", 1.03]
+      ["Waitlisting SHR (>100 mi vs ≤100 mi)", 0.82],
+      ["Transplant SHR (>100 mi vs ≤100 mi)", 0.79],
+      ["Mortality HR (>100 mi vs ≤100 mi)", 1.15],
+      ["Frailty variance θ (VISN clustering)", 0.09]
     ],
     pitfalls: [
-      ["Ecological distance proxy", "Hospital-to-center distance systematically mismeasures individual patient travel burden — patients in rural areas may face greater practical barriers than distance alone captures."],
-      ["Unmeasured contraindications", "Claims and ICD-9 algorithms cannot capture psychosocial transplant barriers, unstated clinical contraindications, or patient refusal."],
-      ["Post-hoc categories", "Distance bands displayed in figures were chosen after inspecting the data and should be treated as exploratory, not as pre-specified strata."]
+      ["Straight-line distance bias", "Euclidean zip-centroid distances underestimate actual travel burden for Veterans in mountainous or rural areas with limited road infrastructure."],
+      ["MELD approximation error", "Administrative lab values used to compute MELD may differ from clinical measurements; imputed values carry additional uncertainty that propagates into severity adjustment."],
+      ["VISN frailty coarseness", "21 VISNs are large administrative units — clustering at this level may not capture finer-grained within-VISN variation in transplant referral culture across individual VA medical centers."]
     ],
-    tags: ["VA", "OPTN linkage", "GEE", "log₂ distance", "competing risks", "ICD-9 algorithm"]
+    tags: ["VA", "VHA–OPTN–Medicare linkage", "Fine-Gray", "Cox", "shared frailty", "VISN clustering", "multiple imputation", "MELD", "distance tiers"]
   },
 
   {
