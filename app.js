@@ -291,91 +291,92 @@ const papers = [
     journal: "JAMA",
     year: "2018",
     source: "https://jamanetwork.com/journals/jama/fullarticle/2667722",
-    takeaway: "A two-decade SRTR cohort shows that live-donor kidney transplant disparities by race and ethnicity did not narrow — they widened — with Black candidates' adjusted subhazard ratio falling from 0.45 to 0.27 relative to White candidates between 1995–1999 and 2010–2014.",
+    takeaway: "OPTN/SRTR cohort of >453,000 adults on the deceased-donor waitlist shows that LDKT disparities did not narrow over 20 years — they widened significantly, with Black candidates' adjusted SHR falling from 0.45 (1995–1999) to 0.27 (2010–2014) relative to White candidates.",
     sections: {
-      Motivation: "National equity programs aimed at reducing racial disparities in live-donor kidney transplantation (LDKT). The study tests whether those efforts succeeded from 1995 to 2014 — two decades after passage of the National Organ Transplant Act amendments.",
-      Design: "Secondary analysis of 453,162 adult first-time kidney transplant candidates on the deceased-donor waitlist in the SRTR. Candidates grouped into four 5-year listing periods; follow-up capped at 2 years from listing.",
-      Methods: "Time to LDKT modeled with Cox (primary) and Fine-Gray (sensitivity). Interaction terms formally test whether racial/ethnic disparities changed across periods. Mediation-style covariate blocks decompose how much disparity is attributable to SES and transplant-center factors.",
-      Results: "White candidates: rising 2-year LDKT incidence. Black candidates: falling from 9.0% (1995–99) to 6.5% (2010–14). Adjusted subhazard ratios for Black candidates: 0.45 → 0.27. Disparities for Hispanic and Asian candidates also worsened."
+      Motivation: "National equity programs and policy changes over two decades aimed to reduce racial disparities in live-donor kidney transplantation (LDKT). By anchoring the cohort strictly to patients already on the waitlist, the design inherently controls for pre-waitlist referral barriers — isolating disparities at the point of actually receiving an LDKT from a living donor.",
+      Design: ">453,000 adult (≥18 yr) first-time deceased-donor waitlist additions from OPTN/SRTR. Race/ethnicity categorized as four mutually exclusive groups: non-Hispanic White (reference), non-Hispanic Black, Hispanic, and Asian. Temporal exposure: era of waitlisting, divided into four 5-year periods — 1995–1999, 2000–2004, 2005–2009, and 2010–2014.",
+      Methods: "Primary model: Fine-Gray subdistribution hazard regression for adjusted SHRs of LDKT, with deceased-donor transplant (DDKT) and death as competing events. Base model: multivariable Cox proportional hazards. Formal disparity trend test: race/ethnicity × time period interaction terms. Covariates: age, sex, primary cause of ESKD, blood type, PRA level, and initial insurance type (Medicare, Medicaid, private).",
+      Results: "Interaction terms highly significant (p < .001): disparities widened, not narrowed. LDKT cumulative incidence rose for White candidates but fell or stagnated for Black, Hispanic, and Asian candidates across eras. Adjusted SHR for Black candidates: 0.45 (1995–99) → 0.27 (2010–14). The widening is not an artifact of differential DDKT rates or mortality — it persists after accounting for both competing events."
     },
     methods: [
       {
-        name: "Time-Stratified Cox",
-        definition: "Cox proportional hazards models \\( h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\) applied separately within pre-defined calendar-time strata (5-year listing periods). Rather than imposing a single \\( h_0(t) \\) and a single \\( \\boldsymbol{\\beta} \\), this estimates period-specific HRs directly, allowing both the baseline hazard and all covariate effects to vary freely across periods — a transparent way to characterize temporal trends without assuming a functional form for how effects change over time.",
+        name: "Fine-Gray Competing Risks",
+        definition: "The primary inferential model of this paper. Fine-Gray subdistribution hazard regression \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] estimates adjusted subhazard ratios (aSHRs) for receiving LDKT in the presence of two competing events that mathematically preclude LDKT. Using standard Cox or Kaplan-Meier without accounting for these events would overestimate the probability of LDKT — particularly if competing-event rates differ by race, which they do. Fine-Gray models \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = \\text{LDKT}) \\) directly, producing unbiased cumulative incidence estimates.",
         setup: [
-          "Group candidates into four listing periods: 1995–1999, 2000–2004, 2005–2009, 2010–2014",
-          "Cap follow-up at 2 years after listing date within each period",
-          "Fit separate Cox models per period with race/ethnicity as primary exposure",
-          "Covariates: age, sex, BMI, ABO, PRA/CPRA, dialysis status, SES indicators",
-          "Report period-specific \\( e^{\\hat{\\beta}_{\\text{race}}} \\) (HR) with 95% CIs for each group vs. White"
+          "Focal event: receipt of live-donor kidney transplant (LDKT)",
+          "Competing event 1: receipt of deceased-donor kidney transplant (DDKT) — precludes LDKT from the same waitlist episode",
+          "Competing event 2: death on the waiting list prior to any transplant",
+          "Fit separate Fine-Gray models within each of the four 5-year listing periods",
+          "Covariates: age, sex, primary cause of ESKD, ABO blood type, PRA level, initial insurance type (Medicare, Medicaid, private)",
+          "Reference group: non-Hispanic White; report aSHRs with 95% CIs for Black, Hispanic, and Asian vs. White"
         ],
         hypothesisTesting: {
-          null: "HR = 1 within each period: race/ethnicity is not associated with time to LDKT",
-          test: "Wald test on race coefficients per period; log-rank test on unadjusted KM curves",
+          null: "aSHR = 1 within each period: race/ethnicity is not associated with the subdistribution hazard of LDKT after adjusting for clinical covariates and competing events",
+          test: "Wald test on each race/ethnicity coefficient; Gray's test for unadjusted CIF comparisons by race within each era",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Black HR decreases from ≈ 0.50 (1995–99) to ≈ 0.30 (2010–14); Hispanic HR from ≈ 0.85 to ≈ 0.55; Asian HR also declines. The progressive worsening across four independent cohorts confirms that widening disparity is not a statistical artifact of a single pooled model."
+        usageInPaper: "Black aSHR falls from 0.45 (1995–99) to 0.27 (2010–14); Hispanic aSHR from 0.83 to 0.52; Asian aSHR reaches 0.42 by 2010–14. The Fine-Gray framework is critical here: if DDKT rates increased more for minority candidates over time, standard Cox would underestimate LDKT disparities (competing events reduce the apparent time at risk). The aSHRs confirm the disparity is real and worsening, not a competing-event artifact."
       },
       {
-        name: "Fine-Gray Competing Risks",
-        definition: "Used here as a sensitivity analysis to confirm that Cox-estimated disparities are not an artifact of informative censoring. Two competing events prevent LDKT: death and deceased-donor transplant. Standard Cox treats both as uninformative censoring — overestimating \\( P(\\text{LDKT}) \\) if racial groups differ in their competing-event rates. Fine-Gray models \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = \\text{LDKT}) \\) directly, avoiding this bias.",
+        name: "Cox Proportional Hazards",
+        definition: "The base survival model used alongside Fine-Gray for robustness checking and temporal trend characterization. The Cox model \\[ h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\] estimates hazard ratios (HRs) for LDKT by race/ethnicity without formally accounting for competing events. It is compared against the Fine-Gray aSHRs: if HR and aSHR estimates track each other closely across eras, competing-event bias is not driving the disparity findings. Divergence would indicate that differential DDKT or death rates between groups are materially distorting the Cox estimates.",
         setup: [
-          "Focal event: live-donor kidney transplant",
-          "Competing events: (1) death before transplant; (2) receipt of deceased-donor kidney transplant",
-          "Fit Fine-Gray models within each 5-year listing period",
-          "Compare SHRs to Cox HRs: substantial divergence would indicate competing-event bias",
-          "Report cumulative incidence functions (CIF) by race and period"
+          "Fit separate Cox models within each 5-year listing period",
+          "Follow-up capped at 2 years from listing date within each period",
+          "Same covariates as Fine-Gray models: age, sex, ESKD etiology, ABO, PRA, insurance type",
+          "Report period-specific \\( e^{\\hat{\\beta}_{\\text{race}}} \\) (HR) vs. White with 95% CIs",
+          "Also fit a single pooled Cox model across all periods for the interaction term analysis (see Race × Era Interaction method)"
         ],
         hypothesisTesting: {
-          null: "SHR = 1 within each period: race/ethnicity not associated with subdistribution hazard of LDKT",
-          test: "Wald test on race coefficients; Gray's test on unadjusted CIFs",
-          alpha: "\\( \\alpha = 0.05 \\)"
+          null: "HR = 1 within each period: race/ethnicity not associated with time to LDKT",
+          test: "Wald test on race coefficients per period; Cox and Fine-Gray HRs compared to assess competing-event bias",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "SHRs broadly consistent with Cox HRs (Black SHR ≈ 0.27–0.45 across periods). This confirms that the disparity findings are not an artifact of differential mortality or deceased-donor transplant rates between racial groups — the same widening pattern is observed in the competing-risk framework."
+        usageInPaper: "Cox HRs broadly parallel the Fine-Gray aSHRs across all four eras, confirming that competing-event rates are not generating a spurious disparity signal. The agreement between the two models strengthens the conclusion that the widening gap reflects genuine reductions in LDKT access for minority candidates rather than changes in DDKT receipt or mortality."
       },
       {
-        name: "Interaction Terms (Trend Test)",
-        definition: "A formal test of whether the association between race/ethnicity and LDKT changes across listing periods. A pooled Cox model includes both main effects and race × period product terms: \\[ \\log h(t) = \\log h_0(t) + \\boldsymbol{\\beta}_{\\text{race}}^\\top \\mathbf{R} + \\boldsymbol{\\gamma}_{\\text{period}}^\\top \\mathbf{P} + \\boldsymbol{\\delta}^\\top (\\mathbf{R} \\otimes \\mathbf{P}) \\] where \\( \\mathbf{R} \\otimes \\mathbf{P} \\) denotes race × period product terms. The joint test of \\( \\boldsymbol{\\delta} = \\mathbf{0} \\) is more rigorous than visually comparing stratum-specific HRs.",
+        name: "Race × Era Interaction Terms",
+        definition: "A formal statistical test of whether racial/ethnic disparities in LDKT changed over time — as opposed to merely observing different point estimates across independently-fit era models. A pooled model includes main effects for race/ethnicity and era, plus race × era product terms: \\[ \\log h(t) = \\log h_0(t) + \\boldsymbol{\\beta}_{\\text{race}}^\\top \\mathbf{R} + \\boldsymbol{\\gamma}_{\\text{era}}^\\top \\mathbf{E} + \\boldsymbol{\\delta}^\\top (\\mathbf{R} \\otimes \\mathbf{E}) \\] A significant joint test of \\( \\boldsymbol{\\delta} = \\mathbf{0} \\) formally proves the disparity magnitude changed. Specific interaction terms (e.g., Black × 2010–2014) quantify exactly how much the aSHR shifted relative to the 1995–1999 baseline.",
         setup: [
-          "Fit a single pooled Cox model with all four listing periods and all racial/ethnic groups",
-          "Include race × period product terms (\\( \\mathbf{R} \\otimes \\mathbf{P} \\)) for each race–period combination",
-          "Joint \\( \\chi^2 \\) or \\( F \\)-test for the block \\( H_0: \\boldsymbol{\\delta} = \\mathbf{0} \\)",
-          "Report individual interaction terms for display; use joint test for primary inference"
+          "Fit a single pooled model (Cox and/or Fine-Gray) across all four eras and all racial/ethnic groups",
+          "Include race × era product terms (\\( \\mathbf{R} \\otimes \\mathbf{E} \\)) — one per race/era combination, with 1995–1999 as the reference era",
+          "Joint \\( \\chi^2 \\) test for the full interaction block \\( H_0: \\boldsymbol{\\delta} = \\mathbf{0} \\)",
+          "Individual terms (e.g., Black × 2010–2014) show the era-specific shift; a negative \\( \\hat{\\delta} \\) means the disparity worsened relative to baseline"
         ],
         hypothesisTesting: {
-          null: "\\( \\boldsymbol{\\delta} = \\mathbf{0} \\): the racial/ethnic disparity in LDKT is constant across all listing periods",
-          test: "Joint \\( \\chi^2 \\) test (likelihood ratio or Wald) on the race × period block; degrees of freedom = (groups − 1) × (periods − 1)",
-          alpha: "\\( \\alpha = 0.05 \\) for the joint test"
+          null: "\\( \\boldsymbol{\\delta} = \\mathbf{0} \\): racial/ethnic disparities in LDKT are constant across all listing eras (no widening or narrowing)",
+          test: "Joint \\( \\chi^2 \\) test on the race × era interaction block; individual Wald tests on specific terms (e.g., Black × 2010–2014 era)",
+          alpha: "\\( p < .05 \\) for joint test; results highly significant at \\( p < .001 \\)"
         },
-        usageInPaper: "Joint p < 0.001 for the Black × period interaction block, confirming that the observed worsening of Black candidates' adjusted LDKT hazard is not due to chance variation across four independent cohorts. Similarly significant for Hispanic candidates. This is the primary inferential claim supporting the conclusion that national equity programs failed to narrow disparities."
+        usageInPaper: "Interaction terms significant at p < .001 for Black and Hispanic candidates, formally proving disparities widened over the 20-year study period rather than merely persisting at a constant level. The Black × 2010–2014 interaction term is particularly large and negative, reflecting the aSHR decline from 0.45 to 0.27 — a 40% relative worsening. This result is the paper's central claim: not just that disparities exist, but that the gap structurally grew despite national equity initiatives."
       },
       {
         name: "Incremental Mediation Analysis",
-        definition: "A sequential covariate-addition strategy that adds potential mediators or confounders in prespecified blocks to decompose how much of the racial/ethnic disparity in LDKT is 'explained' by each factor. Not a formal causal mediation analysis (which requires explicit counterfactual assumptions), but a practical decomposition. Attenuation of the race HR after adding a block suggests that block captures some of the mechanism linking race to LDKT access.",
+        definition: "A sequential covariate-addition strategy that adds prespecified blocks of potential mediators or confounders to decompose how much of the racial/ethnic disparity in LDKT each factor 'explains.' Attenuation of the race aSHR after adding a block is interpreted as that block accounting for a portion of the disparity mechanism. This is not a formal causal mediation analysis — it does not require counterfactual identification assumptions — but it provides a practical, interpretable decomposition of the observed gap.",
         setup: [
-          "Model 1 (base): race/ethnicity + clinical characteristics (age, sex, BMI, ABO, PRA)",
-          "Model 2: add SES block (zip-code median income, insurance type)",
-          "Model 3: add transplant-center block (volume, center LDKT rate, center fixed effects)",
-          "Compute attenuation: \\( \\Delta\\mathrm{HR} = (\\hat{\\beta}_{\\text{base}} - \\hat{\\beta}_{\\text{full}}) / \\hat{\\beta}_{\\text{base}} \\)",
-          "Missing SES: SRTR missing-category approach; multiple imputation as robustness check"
+          "Model 1 (base): race/ethnicity + clinical characteristics (age, sex, ESKD etiology, ABO, PRA)",
+          "Model 2: add insurance type (Medicare, Medicaid, private) — a SES and access proxy",
+          "Model 3: add transplant-center characteristics (LDKT volume, center LDKT rate)",
+          "Compute attenuation per block: \\( \\Delta\\hat{\\beta} = (\\hat{\\beta}_{\\text{base}} - \\hat{\\beta}_{\\text{full}}) / \\hat{\\beta}_{\\text{base}} \\)",
+          "Interpret large attenuation as evidence the block mediates or confounds the racial gap"
         ],
         hypothesisTesting: null,
-        usageInPaper: "Adding SES indicators attenuates Black and Hispanic HRs modestly (~10–15%). Adding transplant-center factors attenuates further but large residual disparities remain. Interpretation: socioeconomic and center-level factors account for some — but not most — of the racial gap, pointing to unmeasured structural barriers."
+        usageInPaper: "Insurance type and transplant-center factors each attenuate Black and Hispanic aSHRs modestly, but substantial residual disparities remain even in the fully-adjusted model. This indicates that socioeconomic access and center-level practice patterns explain part — but not most — of the racial gap in LDKT. The large residual points to unmeasured structural barriers such as living donor availability, cultural attitudes toward donation, and differential engagement from transplant coordinators."
       }
     ],
     signals: [
-      ["Black SHR 1995–1999", 0.45],
-      ["Black SHR 2010–2014", 0.27],
-      ["Hispanic SHR 1995–1999", 0.83],
-      ["Hispanic SHR 2010–2014", 0.52],
-      ["Asian SHR 2010–2014", 0.42]
+      ["Black aSHR 1995–1999", 0.45],
+      ["Black aSHR 2010–2014", 0.27],
+      ["Hispanic aSHR 1995–1999", 0.83],
+      ["Hispanic aSHR 2010–2014", 0.52],
+      ["Asian aSHR 2010–2014", 0.42]
     ],
     pitfalls: [
-      ["Race as a proxy", "Race/ethnicity fields in SRTR are center-recorded categories that proxy complex social, structural, and biological processes — they should not be interpreted as biological causes."],
-      ["Mediator overcontrol", "Adding access and SES variables as 'confounders' may block causal pathways if the goal is to estimate the total disparity — blocking a mechanism is not the same as confounding."],
-      ["Competing-event differential", "Death and deceased-donor transplant rates differ by race; treating them as uninformative censoring without a Fine-Gray sensitivity analysis would over- or understate LDKT disparities."]
+      ["Race as a social proxy", "OPTN/SRTR race/ethnicity fields are center-recorded administrative categories that proxy complex social, structural, and historical processes — they must not be interpreted as biological causes of differential LDKT access."],
+      ["Mediator overcontrol", "Adding insurance type or center characteristics as 'confounders' may block causal pathways; if insurance is itself a mechanism linking race to LDKT access, adjusting for it underestimates the total disparity."],
+      ["Pre-waitlist selection", "Anchoring the cohort to waitlisted patients controls for referral barriers but introduces a selection effect — patients who never reached the waitlist (disproportionately minority candidates) are excluded from the disparity estimate entirely."]
     ],
-    tags: ["SRTR", "equity", "Cox", "Fine-Gray", "interactions", "mediation", "temporal trends"]
+    tags: ["OPTN", "SRTR", "Fine-Gray", "Cox", "race × era interaction", "competing risks", "LDKT", "DDKT", "equity"]
   },
 
   {
