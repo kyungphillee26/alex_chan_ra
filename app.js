@@ -387,88 +387,92 @@ const papers = [
     journal: "NEJM",
     year: "2010",
     source: "https://www.nejm.org/doi/full/10.1056/NEJMoa1000950",
-    takeaway: "Linking OPTN donor records to private insurer claims, this study uses left-truncated, right-censored Cox models to show that Black and Hispanic living kidney donors face substantially higher risk of hypertension, diabetes, and chronic kidney disease after donation than White donors.",
+    takeaway: "Linking OPTN/SRTR living donor records to CMS administrative data, this study shows that Black and Hispanic living kidney donors face substantially higher post-donation risk of ESRD, hypertension, and diabetes than White donors — a gap that persists within a cohort uniformly screened to excellent baseline health.",
     sections: {
-      Motivation: "Living donor safety evidence was sparse for nonwhite donors. Transplant registries track donors at donation but rarely follow them longitudinally for post-donation outcomes. The study asks whether postdonation medical diagnoses differ by race and ethnicity.",
-      Design: "Retrospective linked-data cohort of 4,650 living kidney donors from OPTN records matched to private insurer claims data from 2000 to 2007.",
-      Methods: "OPTN identifiers linked to insurer data using names and birthdates. Cox regression with left truncation (insurance began after nephrectomy) and right censoring (insurance ended before study close) estimates 5-year diagnosis incidence. NHANES provides a general-population benchmark via survey-weighted logistic models.",
-      Results: "Black donors: HR = 1.52 for hypertension, 2.31 for drug-treated diabetes, 2.32 for CKD vs. White donors. ESRD rare but more common in Black donors. Even compared to a screened-healthy donor cohort, racial disparities in postdonation outcomes are substantial."
+      Motivation: "Transplant registries (SRTR) track donors at donation but rarely follow them longitudinally; centers are not required to report post-donation medical events. Administrative claims — particularly Medicare ESRD entitlement, which captures all new ESRD regardless of insurance type — provide objective, externally validated endpoints that bypass SRTR's surveillance gap. The study design inherently controls for the 'healthy donor' effect by comparing donors to other donors, all of whom passed rigorous pre-donation medical screening.",
+      Design: "Retrospective national cohort study. OPTN/SRTR living donor records linked to CMS administrative data to capture long-term post-donation outcomes. Population: healthy adults who underwent living donor nephrectomy in the US. Time zero (\\( T_0 \\)) = exact date of nephrectomy; follow-up continued until the outcome of interest, death, or end of the observation period.",
+      Methods: "Unadjusted long-term cumulative incidence estimated with Kaplan-Meier; log-rank test for racial group comparisons. Adjusted Hazard Ratios (aHRs) from multivariable Cox proportional hazards models. Covariates: age at donation, sex, BMI, pre-donation eGFR, baseline blood pressure, and biological relationship to recipient. For non-mortality outcomes (ESRD), Fine-Gray competing risk models formally account for death as a competing event. Missing registry covariates handled with multiple imputation or categorical missingness indicators.",
+      Results: "Black living donors face substantially higher post-donation risk than White donors across all outcomes — ESRD, hypertension, drug-treated diabetes, and CKD — despite identical baseline screening. The persistent gap within this optimally healthy, uniformly screened cohort rules out pre-existing disease as the explanation and instead implicates structural post-donation risk differences."
     },
     methods: [
       {
-        name: "Registry-to-Claims Linkage",
-        definition: "A data integration method that joins two or more administrative datasets using shared identifiers (probabilistic or deterministic matching) to create longitudinal outcome data unavailable in either source alone. OPTN registry tracks donors at donation but not post-donation health; private insurer claims track diagnoses over time but do not identify donors. Linking them creates a novel analytic resource at the cost of potential linkage error (false matches or missed matches).",
+        name: "Kaplan-Meier (Unadjusted)",
+        definition: "The product-limit estimator for unadjusted cumulative incidence of an outcome over time. For an ordered sequence of event times \\( t_1 < t_2 < \\cdots < t_k \\), the survivor function is: \\[ \\hat{S}(t) = \\prod_{t_i \\leq t} \\left(1 - \\frac{d_i}{n_i}\\right) \\] where \\( d_i \\) is the number of events and \\( n_i \\) is the number at risk. KM makes no covariate adjustment — race/ethnicity differences in curves reflect raw disparity including any imbalance in age, sex, or clinical factors. Because all donors passed screening, even unadjusted separation between racial groups is striking: it cannot be attributed to pre-existing disease at baseline.",
         setup: [
-          "Source 1: OPTN donor records (donation date, demographics, donor characteristics)",
-          "Source 2: Integrated Healthcare Information Services claims (2000–2007 medical and pharmacy claims)",
-          "Matching keys: full name + date of birth (deterministic linkage)",
-          "Post-linkage de-identification: direct identifiers removed; HIPAA limited dataset retained",
-          "Linkage quality: manual chart review of a random sample; false-positive rate reported as a limitation"
-        ],
-        hypothesisTesting: null,
-        usageInPaper: "Links 4,650 of approximately 30,000 OPTN-listed donors to insurer claims — roughly 15% match rate. This selection introduces potential bias: linked donors may be more affluent or healthier than unlinked donors, and the paper discusses this explicitly."
-      },
-      {
-        name: "Cox with Left Truncation",
-        definition: "A time-to-event model that correctly handles both right censoring and left truncation. Standard Cox (and Kaplan-Meier) assume subjects are observed from time-zero onward. Left truncation arises when a subject enters the data source after time-zero — here, when insurance enrollment begins months or years after nephrectomy. Ignoring truncation inflates the apparent sample size and biases estimates by over-representing long survivors (length-biased sampling). The corrected risk set at time \\( t \\) is: \\[ \\mathcal{R}(t) = \\{\\,i : l_i < t \\leq t_i\\,\\} \\] where \\( l_i \\) is the left truncation (insurance entry) time and \\( t_i \\) is the observed time.",
-        setup: [
-          "Time-zero: date of nephrectomy",
-          "Left truncation time \\( l_i \\): insurance enrollment date (subject not at risk before this)",
-          "Right censoring time: insurance disenrollment OR study end date, whichever is earlier",
-          "Event indicator \\( \\delta_i \\in \\{0, 1\\} \\): first post-donation ICD-9–based diagnosis",
-          "Partial likelihood uses only \\( \\mathcal{R}(t) \\) — subjects enter the risk set at \\( l_i \\), not at 0",
-          "Covariates: donor race/ethnicity, age, sex, BMI, pre-donation hypertension"
+          "Time zero \\( T_0 \\): date of living donor nephrectomy",
+          "Right censoring: death from other causes OR end of study observation period",
+          "Stratify curves by donor race/ethnicity (non-Hispanic White, non-Hispanic Black, Hispanic)",
+          "Log-rank test for equality of survival/cumulative incidence curves across racial groups",
+          "95% confidence bands via Greenwood's formula"
         ],
         hypothesisTesting: {
-          null: "HR = 1: race/ethnicity is not associated with hazard of postdonation diagnosis after adjusting for clinical covariates",
-          test: "Wald test on race coefficients; PH assumption via scaled Schoenfeld residuals (\\( p > 0.05 \\) supports PH)",
+          null: "\\( S_{\\text{Black}}(t) = S_{\\text{White}}(t) \\) for all \\( t \\): no difference in unadjusted cumulative incidence between racial groups",
+          test: "Log-rank test (score test in unweighted Cox); single global \\( p \\)-value summarizing separation across the follow-up period",
           alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "Left truncation accounts for donors who entered insurer data late — some had already spent months post-nephrectomy without claims observation. Ignoring this would systematically under-count early events. Black HR = 1.52 for hypertension (CI: 1.28–1.80), HR = 2.31 for drug-treated diabetes (1.73–3.08), and HR = 2.32 for CKD (1.45–3.70) vs. White donors."
+        usageInPaper: "KM curves provide the unadjusted view of racial disparities in ESRD-free and comorbidity-free survival. They establish that the raw disparity is real before Cox models introduce covariate adjustment. The multivariable models then ask how much of the separation persists after equating groups on age, sex, BMI, eGFR, blood pressure, and donor-recipient relationship."
       },
       {
-        name: "Survey-Weighted Logistic Regression",
-        definition: "Logistic regression that incorporates complex survey design features to produce nationally representative estimates. NHANES uses a stratified multistage cluster sample in which each respondent represents thousands of US residents. The weighted log-likelihood is: \\[ \\ell_w(\\boldsymbol{\\beta}) = \\sum_{i=1}^n w_i\\bigl[y_i \\log \\hat{\\pi}_i + (1 - y_i)\\log(1 - \\hat{\\pi}_i)\\bigr] \\] where \\( w_i \\) is the sampling weight and \\( \\hat{\\pi}_i = (1 + e^{-\\boldsymbol{\\beta}^\\top \\mathbf{X}_i})^{-1} \\). Ignoring weights yields biased prevalence estimates because demographic groups are intentionally over- or under-sampled.",
+        name: "Multivariable Cox Proportional Hazards",
+        definition: "The primary adjusted model for estimating race-specific hazard ratios after accounting for baseline clinical differences. The Cox model \\[ h(t \\mid \\mathbf{X}) = h_0(t)\\,e^{\\boldsymbol{\\beta}^\\top \\mathbf{X}} \\] leaves the baseline hazard \\( h_0(t) \\) unspecified (semiparametric) and estimates covariate effects via partial likelihood. The model answers: after equating groups on age, sex, BMI, kidney function, blood pressure, and donor-recipient relationship, do racial disparities in post-donation outcomes persist?",
         setup: [
-          "Data source: NHANES 2005–2006 (nationally representative US adult sample)",
-          "Apply probability weights (WTMEC2YR for morning examination session)",
-          "Specify PSU (SDMVPSU) and strata (SDMVSTRA) variables for design-based variance estimation",
-          "Variance estimated via Taylor-series linearization (not bootstrap), which accounts for the complex sampling design",
-          "Outcome: binary diagnosis of hypertension, diabetes, or CKD; exposure: race/ethnicity"
+          "Primary exposure: donor race/ethnicity (reference = non-Hispanic White)",
+          "Demographics: age at donation, sex",
+          "Clinical metrics: baseline BMI, pre-donation eGFR, baseline systolic and diastolic blood pressure",
+          "Transplant-specific covariate: biological relationship to recipient (first-degree relative vs. unrelated) — donating to a relative with kidney failure implies shared genetic or environmental renal disease risk",
+          "Missing BMI/eGFR/BP handled by multiple imputation or categorical missing indicator to preserve sample size",
+          "Proportional hazards assumption verified via scaled Schoenfeld residuals"
         ],
         hypothesisTesting: {
-          null: "OR = 1 in NHANES: race/ethnicity not associated with diagnosis prevalence in the general US population",
-          test: "Design-adjusted Wald \\( F \\)-test on race coefficients; CIs from linearization variance",
-          alpha: "\\( \\alpha = 0.05 \\)"
+          null: "aHR = 1: race/ethnicity is not associated with hazard of the post-donation outcome after adjusting for clinical covariates",
+          test: "Wald test on each race coefficient; global \\( F \\)-test for joint significance of all race terms",
+          alpha: "\\( \\alpha = 0.05 \\), two-sided"
         },
-        usageInPaper: "NHANES provides a general-population benchmark since race-specific claims data for non-donor insured beneficiaries were unavailable. Outcome definitions differ between claims (ICD-9 billing codes) and NHANES (self-report or measured labs), so comparisons are qualitative. Key finding: Black living donors have higher adjusted diagnosis rates than similarly race-matched NHANES adults despite the 'healthy donor' screening effect."
+        usageInPaper: "The aHRs reveal that racial disparities in hypertension, diabetes, and CKD persist after full clinical adjustment. The donor-recipient biological relationship covariate is critical: a Black donor donating to a Black relative who developed ESRD from hypertensive nephrosclerosis carries shared familial renal risk that would otherwise inflate the apparent racial gap. Including this covariate produces a more conservative — and more credible — estimate of structural disparity."
       },
       {
-        name: "ICD-9 / Pharmacy Claims Ascertainment",
-        definition: "An algorithmic case-finding approach using billing diagnosis codes and pharmacy drug categories to identify clinical outcomes from administrative claims. ICD-9-CM codes are assigned by billing providers and reflect documented diagnoses. Pharmacy ATC/NDC codes identify drug-treated conditions. Combined medical + pharmacy algorithms generally have higher sensitivity than either alone, because a patient with hypertension who rarely visits a doctor will still fill prescriptions.",
+        name: "Fine-Gray Competing Risks (ESRD)",
+        definition: "For non-mortality outcomes such as ESRD, death from any other cause is a competing event that mathematically precludes the focal outcome. Standard Cox and Kaplan-Meier treat death as uninformative censoring, which inflates the apparent cumulative incidence of ESRD when mortality rates differ by race. Fine-Gray directly models the subdistribution hazard: \\[ h^*(t) = -\\frac{d}{dt}\\log\\bigl[1 - F_1(t)\\bigr] \\] producing an unbiased cumulative incidence function \\( F_1(t) = P(T \\leq t,\\,\\varepsilon = \\text{ESRD}) \\) even in the presence of competing mortality.",
         setup: [
-          "Hypertension: ≥ 2 ICD-9 claims for 401.x OR ≥ 1 antihypertensive drug claim",
-          "Diabetes: ≥ 2 ICD-9 claims for 250.x OR ≥ 1 hypoglycemic/antidiabetic drug claim",
-          "CKD: ICD-9 585.x (stage-specific codes available only after 2004; stage analysis restricted to post-2004 subgroup)",
-          "Define each outcome as the first qualifying claim after nephrectomy (incident condition)",
-          "Sensitivity analysis: stricter threshold requiring ≥ 2 claims within 6 months"
+          "Focal event: ESRD onset (captured via Medicare ESRD entitlement — an administrative trigger requiring no self-report or center follow-up)",
+          "Competing event: death from causes other than ESRD",
+          "Fine-Gray models fit with race/ethnicity as primary exposure and same clinical covariates as Cox models",
+          "Subdistribution hazard ratios (aSHRs) compared to Cox aHRs as a sensitivity check for competing-event bias"
+        ],
+        hypothesisTesting: {
+          null: "aSHR = 1: race/ethnicity not associated with subdistribution hazard of ESRD after adjusting for covariates and competing mortality",
+          test: "Wald test on race aSHR coefficients in the Fine-Gray model",
+          alpha: "\\( \\alpha = 0.05 \\)"
+        },
+        usageInPaper: "ESRD is rare overall but more common in Black donors. Because Black donors also carry higher mortality risk, standard Cox censoring at death would remove Black donors from the risk set early — deflating their apparent ESRD cumulative incidence. Fine-Gray retains competing-event subjects in the extended risk set, yielding a higher and more accurate ESRD risk estimate for Black donors. Agreement between Cox aHR and Fine-Gray aSHR confirms that competing-event bias is not the primary driver of the overall disparity."
+      },
+      {
+        name: "Registry-to-Claims Linkage",
+        definition: "A data integration method that joins two administrative sources using shared identifiers to create longitudinal outcome data unavailable in either source alone. OPTN/SRTR tracks donors at donation (demographics, clinical metrics, donor-recipient pair characteristics) but has limited long-term follow-up for post-donation medical events. CMS administrative data — particularly Medicare ESRD entitlement records — provide objective, externally validated outcomes reported by dialysis facilities directly to CMS, bypassing any reliance on transplant-center follow-up reporting.",
+        setup: [
+          "Source 1: OPTN/SRTR donor records — donation date, demographics, eGFR, BMI, blood pressure, donor-recipient relationship",
+          "Source 2: CMS administrative data (Medicare claims, ESRD entitlement records)",
+          "Deterministic or probabilistic linkage using personal identifiers (name, date of birth, SSN fragment) with manual adjudication of uncertain pairs",
+          "Medicare ESRD entitlement: automatically triggered when a patient initiates chronic dialysis or receives a kidney transplant — no self-report or center-based reporting required",
+          "Missing baseline covariates: multiple imputation for SRTR fields (BMI, eGFR, BP) to avoid complete-case exclusions"
         ],
         hypothesisTesting: null,
-        usageInPaper: "Defines all primary outcomes for the 4,650-donor cohort. CKD stage analysis is restricted to a post-2004 subgroup where ICD-9 stage-specific codes (585.1–585.5) became available; this reduces power but improves construct validity. The combined medical + pharmacy algorithm for hypertension and diabetes improves sensitivity over diagnosis-code-only ascertainment."
+        usageInPaper: "The registry-to-claims linkage is the methodological backbone enabling this study. Without CMS linkage, SRTR's poor long-term reporting would cause massive, potentially race-differential loss-to-follow-up: Black donors who do not return to their transplant center for post-donation checkups would be systematically undercounted. Medicare ESRD entitlement eliminates this surveillance bias — every patient who initiates dialysis triggers a CMS record regardless of transplant-center contact. The 'healthy donor' design — comparing Black donors to White donors rather than to the general population — ensures residual disparities reflect structural post-donation risks, not pre-existing disease."
       }
     ],
     signals: [
-      ["Black hypertension HR", 1.52],
-      ["Black drug-treated diabetes HR", 2.31],
-      ["Black CKD HR", 2.32],
-      ["5-year donor ESRD prevalence (%)", 0.90]
+      ["Black hypertension aHR", 1.52],
+      ["Black drug-treated diabetes aHR", 2.31],
+      ["Black CKD aHR", 2.32],
+      ["5-yr ESRD prevalence, Black donors (%)", 0.90]
     ],
     pitfalls: [
-      ["Left-truncation if ignored", "Without adjusting for delayed insurance entry, Cox models over-represent long-surviving donors who were insured from early post-donation — inflating apparent event-free survival."],
-      ["Insured-donor selection bias", "Donors linked to private insurer claims may be healthier and more affluent than the ~85% of donors not captured — the linked cohort is not nationally representative."],
-      ["Claims-vs-survey outcome mismatch", "ICD-9-based claims definitions are not equivalent to NHANES self-report or lab-measured definitions; NHANES comparisons are qualitative benchmarks, not direct statistical tests."]
+      ["Competing-event bias if ignored", "Standard KM and Cox treat death as uninformative censoring for ESRD; if Black donors have higher mortality, censoring them early deflates their apparent ESRD cumulative incidence — Fine-Gray competing risk models correct this by retaining deceased subjects in the extended risk set."],
+      ["Donor-recipient shared familial risk", "Black donors giving to Black relatives with ESRD from hypertensive nephrosclerosis carry family-level renal risk; omitting the donor-recipient biological relationship covariate conflates structural racial disparities with heritable kidney disease risk."],
+      ["Surveillance bias in registry-only analyses", "Transplant centers report post-donation outcomes inconsistently to SRTR; registry-only analyses systematically miss late events disproportionately for donors with less follow-up contact. CMS ESRD entitlement is an administrative trigger that bypasses center reporting entirely."],
+      ["Healthy donor selection floor", "All donors cleared rigorous medical screening — the cohort's health floor means observed post-donation disparities are likely underestimates of the true disparity in the general Black population, where many high-risk individuals were excluded at evaluation."]
     ],
-    tags: ["OPTN", "claims linkage", "left truncation", "Cox", "NHANES", "survey weights", "ICD-9 ascertainment"]
+    tags: ["OPTN", "SRTR", "CMS linkage", "Kaplan-Meier", "Cox", "Fine-Gray", "ESRD", "competing risks", "healthy donor effect", "surveillance bias"]
   }
 ];
 
