@@ -33,15 +33,12 @@ input {
 }
 
 .app-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: end;
   padding: 32px clamp(18px, 4vw, 56px) 20px;
   border-bottom: 1px solid var(--line);
   background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
 }
 
+/* .eyebrow is still used inside panels and evidence band */
 .eyebrow {
   margin: 0 0 7px;
   color: var(--green-dark);
@@ -79,36 +76,6 @@ h3 {
   line-height: 1.2;
 }
 
-.header-actions {
-  display: grid;
-  gap: 12px;
-  min-width: min(360px, 38vw);
-}
-
-.search-wrap {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.search-wrap input {
-  width: 100%;
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 0 13px;
-  color: var(--ink);
-  background: #fff;
-  outline: none;
-}
-
-.search-wrap input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(35, 116, 107, 0.13);
-}
 
 
 .paper-tabs {
@@ -541,14 +508,9 @@ footer {
 }
 
 @media (max-width: 1080px) {
-  .app-header,
   .paper-layout,
   .evidence-band {
     grid-template-columns: 1fr;
-  }
-
-  .header-actions {
-    min-width: 0;
   }
 
   .method-panel {
