@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Health Economics LLM Research Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Health economics research automation</p>
+        <h1>Transplant policy and equity methods dashboard</h1>
+      </div>
+      <div class="header-actions" aria-label="Dashboard controls">
+        <label class="search-wrap">
+          <span>Search</span>
+          <input id="paperSearch" type="search" placeholder="methods, Cox, distance, race">
+        </label>
+        <div class="view-switch" role="tablist" aria-label="Dashboard view">
+          <button class="view-tab is-active" type="button" data-view="paper" role="tab" aria-selected="true">Paper</button>
+          <button class="view-tab" type="button" data-view="compare" role="tab" aria-selected="false">Compare</button>
+          <button class="view-tab" type="button" data-view="automation" role="tab" aria-selected="false">Automation</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="paper-tabs" id="paperTabs" aria-label="Choose paper"></nav>
+
+    <main>
+      <section class="paper-view" id="paperView" aria-live="polite">
+        <div class="paper-layout">
+          <article class="paper-summary">
+            <div class="paper-kicker" id="paperKicker"></div>
+            <h2 id="paperTitle"></h2>
+            <p class="paper-citation" id="paperCitation"></p>
+            <p class="paper-takeaway" id="paperTakeaway"></p>
+
+            <div class="lens-grid" id="lensGrid"></div>
+          </article>
+
+          <aside class="method-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Method lens</p>
+                <h3 id="methodPanelTitle">Methods</h3>
+              </div>
+              <a id="paperLink" href="#" target="_blank" rel="noreferrer">Source</a>
+            </div>
+            <div class="method-nav" id="methodNav" aria-label="Method sections"></div>
+            <div class="method-detail" id="methodDetail"></div>
+          </aside>
+        </div>
+
+        <section class="evidence-band" aria-label="Evidence and risk">
+          <div>
+            <p class="eyebrow">Quantitative signal</p>
+            <div class="signal-chart" id="signalChart"></div>
+          </div>
+          <div>
+            <p class="eyebrow">Pitfalls to audit</p>
+            <div class="pitfall-list" id="pitfallList"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="compare-view is-hidden" id="compareView" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Cross-paper map</p>
+            <h2>Methods, data, and threats compared</h2>
+          </div>
+          <p>Use this as the extraction schema for an LLM pipeline: every claim should land in one of these cells with source page provenance.</p>
+        </div>
+        <div class="compare-table-wrap">
+          <table class="compare-table" id="compareTable">
+            <thead>
+              <tr>
+                <th>Paper</th>
+                <th>Design</th>
+                <th>Primary method</th>
+                <th>Data linkage</th>
+                <th>Key threat</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="automation-view is-hidden" id="automationView" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">LLM workflow</p>
+            <h2>Automating extraction without losing econometric discipline</h2>
+          </div>
+          <p>The dashboard turns the papers into a reproducible schema for motivation, design, methods, results, and audit risk.</p>
+        </div>
+        <div class="automation-grid" id="automationGrid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Public dashboard includes summaries, metadata, and publisher links. Journal PDFs are not redistributed in this public artifact.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
