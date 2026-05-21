@@ -33,10 +33,6 @@ input {
 }
 
 .app-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: end;
   padding: 32px clamp(18px, 4vw, 56px) 20px;
   border-bottom: 1px solid var(--line);
   background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
