@@ -466,6 +466,7 @@ let selectedMethod = 0;
 
 const els = {
   paperTabs:     document.getElementById("paperTabs"),
+  paperSearch:   document.getElementById("paperSearch"),
   paperKicker:   document.getElementById("paperKicker"),
   paperTitle:    document.getElementById("paperTitle"),
   paperCitation: document.getElementById("paperCitation"),
@@ -495,7 +496,22 @@ function typeset(el) {
 // ─── Filtering ────────────────────────────────────────────────────────────────
 
 function filteredPapers() {
-  return papers;
+  const query = els.paperSearch.value.trim().toLowerCase();
+  if (!query) return papers;
+  return papers.filter((p) => {
+    const haystack = [
+      p.title, p.short, p.citation, p.takeaway,
+      ...Object.values(p.sections),
+      ...p.tags,
+      ...p.methods.flatMap((m) => [
+        m.name, m.definition, m.usageInPaper,
+        ...(m.setup || []),
+        m.hypothesisTesting ? Object.values(m.hypothesisTesting).join(" ") : ""
+      ]),
+      ...p.pitfalls.flat()
+    ].join(" ").toLowerCase();
+    return haystack.includes(query);
+  });
 }
 
 // ─── Render helpers ───────────────────────────────────────────────────────────
@@ -630,6 +646,11 @@ function render() {
   renderTabs();
   renderPaper();
 }
+
+els.paperSearch.addEventListener("input", () => {
+  renderTabs();
+  renderPaper();
+});
 
 document.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLInputElement) return;
